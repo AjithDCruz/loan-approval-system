@@ -14,6 +14,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Initialize session state variables
+if 'form_submitted' not in st.session_state:
+    st.session_state.form_submitted = False
+if 'result' not in st.session_state:
+    st.session_state.result = None
+if 'app_id' not in st.session_state:
+    st.session_state.app_id = None
+
 # Custom CSS for stunning design
 custom_css = """
 <style>
@@ -22,16 +30,7 @@ custom_css = """
         padding: 0;
     }
 
-    body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
     .main {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    }
-
-    .stApp {
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
 
@@ -95,16 +94,6 @@ custom_css = """
         border-radius: 20px;
         box-shadow: 0 20px 60px rgba(0,0,0,0.15);
         border-left: 6px solid #667eea;
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
     }
 
     .form-title {
@@ -176,29 +165,24 @@ custom_css = """
     }
 
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 18px 50px;
-        border-radius: 12px;
-        font-size: 18px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 20px rgba(102,126,234,0.4);
-        width: 100%;
-        height: 60px;
-        letter-spacing: 1px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 18px 50px !important;
+        border-radius: 12px !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 8px 20px rgba(102,126,234,0.4) !important;
+        width: 100% !important;
+        height: 60px !important;
+        letter-spacing: 1px !important;
     }
 
     .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(102,126,234,0.6);
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    }
-
-    .stButton > button:active {
-        transform: translateY(-1px);
+        transform: translateY(-3px) !important;
+        box-shadow: 0 12px 30px rgba(102,126,234,0.6) !important;
     }
 
     .factor-box {
@@ -207,23 +191,6 @@ custom_css = """
         border-radius: 12px;
         margin-bottom: 15px;
         border-left: 5px solid #667eea;
-        animation: slideInLeft 0.4s ease-out;
-    }
-
-    @keyframes slideInLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    .factor-box strong {
-        color: #667eea;
-        font-size: 14px;
     }
 
     .stTabs [data-baseweb="tab-list"] {
@@ -240,43 +207,6 @@ custom_css = """
         font-size: 15px;
         letter-spacing: 0.5px;
         transition: all 0.3s ease;
-    }
-
-    .stTabs [aria-selected="true"] [data-baseweb="tab"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    .info-box {
-        background: linear-gradient(135deg, #e0f7ff 0%, #e0f2f1 100%);
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 5px solid #00bcd4;
-        margin: 15px 0;
-    }
-
-    .success-box {
-        background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 5px solid #4caf50;
-        margin: 15px 0;
-    }
-
-    .warning-box {
-        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 5px solid #ff9800;
-        margin: 15px 0;
-    }
-
-    .error-box {
-        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 5px solid #f44336;
-        margin: 15px 0;
     }
 
     .footer {
@@ -306,7 +236,6 @@ tab1, tab2, tab3, tab4 = st.tabs(["📝 Submit Application", "📊 View Results"
 # TAB 1: Submit Application
 with tab1:
     st.markdown('<div class="form-container">', unsafe_allow_html=True)
-
     st.markdown('<h2 class="form-title">🎯 Loan Application Form</h2>', unsafe_allow_html=True)
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
@@ -314,23 +243,15 @@ with tab1:
 
     with col1:
         st.markdown("### 👤 Personal Information")
-        age = st.slider("🎂 Age", min_value=18, max_value=100, value=35, help="Applicant age (18-100 years)", key="age_slider")
-
+        age = st.slider("🎂 Age", min_value=18, max_value=100, value=35, help="Applicant age (18-100 years)")
         income = st.number_input("💰 Annual Income ($)", min_value=20000, value=100000, step=5000, help="Total annual household income")
-
-        employment = st.selectbox("💼 Employment Type",
-                                 ["Salaried", "Self-Employed", "Contract"],
-                                 help="Current employment status")
+        employment = st.selectbox("💼 Employment Type", ["Salaried", "Self-Employed", "Contract"], help="Current employment status")
 
     with col2:
         st.markdown("### 📊 Financial Information")
         credit_score = st.slider("📈 Credit Score", min_value=300, max_value=850, value=720, help="Your credit score (300-850)")
-
         liabilities = st.number_input("💳 Existing Liabilities ($)", min_value=0, value=30000, step=5000, help="Total existing debt/loans")
-
-        location = st.selectbox("📍 Location",
-                               ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Miami", "Boston"],
-                               help="Application location")
+        location = st.selectbox("📍 Location", ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Miami", "Boston"], help="Application location")
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
@@ -371,22 +292,21 @@ with tab1:
     col_button = st.columns([1, 2, 1])
 
     with col_button[1]:
-        submit_button = st.button("🚀 SUBMIT APPLICATION", use_container_width=True, key="submit_btn")
+        submit_button = st.button("🚀 SUBMIT APPLICATION", use_container_width=True)
 
     if submit_button:
         with st.spinner("⏳ Processing with Claude Haiku 4.5..."):
             progress_bar = st.progress(0)
-            status_text = st.empty()
 
             try:
                 payload = {
-                    "age": age,
-                    "income": income,
+                    "age": int(age),
+                    "income": float(income),
                     "employment": employment,
-                    "credit_score": credit_score,
-                    "loan_amount": loan_amount,
-                    "tenure_months": tenure,
-                    "liabilities": liabilities,
+                    "credit_score": int(credit_score),
+                    "loan_amount": float(loan_amount),
+                    "tenure_months": int(tenure),
+                    "liabilities": float(liabilities),
                     "location": location
                 }
 
@@ -395,13 +315,13 @@ with tab1:
                     time.sleep(0.015)
                     progress_bar.progress(i + 1)
 
-                status_text.text("🔄 Sending to API...")
                 response = requests.post("http://127.0.0.1:8000/submit", json=payload, timeout=15)
 
                 if response.status_code == 200:
                     result = response.json()
                     st.session_state.result = result['result']
                     st.session_state.app_id = result['application_id']
+                    st.session_state.form_submitted = True
 
                     progress_bar.progress(100)
                     time.sleep(0.5)
@@ -419,7 +339,7 @@ with tab1:
 
 # TAB 2: View Results
 with tab2:
-    if "result" in st.session_state:
+    if st.session_state.result is not None:
         result = st.session_state.result
         decision = result.get('decision', 'UNKNOWN')
         risk_score = result.get('risk_score', 0)
@@ -479,7 +399,7 @@ with tab2:
 
         with col_exp1:
             st.markdown("### 💡 Decision Explanation")
-            st.markdown(f'<div class="info-box">{result.get("explanation", "No explanation available")}</div>', unsafe_allow_html=True)
+            st.info(result.get("explanation", "No explanation available"))
 
         with col_exp2:
             st.markdown("### 🎯 Key Decision Factors")
@@ -556,7 +476,7 @@ with tab2:
         st.plotly_chart(fig2, use_container_width=True)
 
     else:
-        st.markdown('<div class="warning-box"><strong>⚠️ No Results Yet</strong><br>Please submit an application first to view results!</div>', unsafe_allow_html=True)
+        st.warning("⚠️ No Results Yet - Please submit an application first to view results!")
 
 # TAB 3: Analytics Dashboard
 with tab3:
@@ -592,7 +512,7 @@ with tab3:
 
     st.markdown("### 🎯 Decision Distribution")
 
-    if "result" in st.session_state:
+    if st.session_state.result is not None:
         decision_data = {
             'Decision': ['Approved', 'Rejected', 'Under Review'],
             'Count': [1, 0, 0]
@@ -616,7 +536,7 @@ with tab3:
 
     st.markdown("### 📈 Risk Score Trends")
 
-    if "result" in st.session_state:
+    if st.session_state.result is not None:
         risk_data = {
             'Application': ['Current'],
             'Risk Score': [st.session_state.result.get('risk_score', 0)]
@@ -643,7 +563,7 @@ with tab3:
 with tab4:
     st.markdown("### 📋 Complete Audit Trail")
 
-    if "result" in st.session_state:
+    if st.session_state.result is not None:
         result = st.session_state.result
 
         col1, col2 = st.columns([1, 1])
@@ -673,7 +593,7 @@ with tab4:
         st.code(json.dumps(result, indent=2), language='json')
 
     else:
-        st.markdown('<div class="warning-box"><strong>⚠️ No Audit Trail Available</strong><br>Please submit an application first!</div>', unsafe_allow_html=True)
+        st.warning("⚠️ No Audit Trail Available - Please submit an application first!")
 
 # Footer
 st.markdown("""
