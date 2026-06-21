@@ -8,294 +8,343 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 st.set_page_config(
-    page_title="Agentic AI Loan Approval",
+    page_title="Loan Approval System",
     page_icon="🏦",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Initialize session state variables
-if 'form_submitted' not in st.session_state:
-    st.session_state.form_submitted = False
-if 'result' not in st.session_state:
-    st.session_state.result = None
-if 'app_id' not in st.session_state:
-    st.session_state.app_id = None
-
-# Custom CSS for stunning design
 custom_css = """
 <style>
-    * {
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         margin: 0;
         padding: 0;
     }
 
     .main {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    }
-
-    .header-container {
+        padding: 0px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        margin-bottom: 40px;
-        color: white;
-        text-align: center;
-        animation: slideDown 0.6s ease-out;
     }
 
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Header styling */
+    .header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 20px;
+        border-radius: 20px;
+        margin: 20px auto;
+        max-width: 1200px;
+        text-align: center;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        color: white;
     }
 
     .header-title {
-        font-size: 52px;
+        font-size: 44px;
         font-weight: 900;
-        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 15px;
-        letter-spacing: 2px;
+        margin: 0;
+        color: #00f2fe;
+        text-align: center;
     }
 
     .header-subtitle {
-        font-size: 18px;
+        font-size: 16px;
+        margin: 10px 0 0 0;
         color: rgba(255,255,255,0.9);
-        font-weight: 300;
-        letter-spacing: 1px;
+        text-align: center;
+    }
+
+    /* Form container */
+    .form-section {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        margin: 30px auto;
+        max-width: 1200px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .form-title {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 30px 0;
+        color: #333;
+        text-align: left;
+    }
+
+    .section-header {
+        font-size: 18px;
+        font-weight: 600;
+        color: #667eea;
+        margin: 20px 0 15px 0;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9ff;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+    }
+
+    /* Results section */
+    .results-section {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 20px;
+    }
+
+    .decision-banner-approved {
+        background: linear-gradient(135deg, #00d084 0%, #00c872 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 40px;
+        font-weight: bold;
+        margin: 20px 0;
+        box-shadow: 0 10px 30px rgba(0,208,132,0.3);
+    }
+
+    .decision-banner-rejected {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 40px;
+        font-weight: bold;
+        margin: 20px 0;
+        box-shadow: 0 10px 30px rgba(255,71,87,0.3);
+    }
+
+    .decision-banner-review {
+        background: linear-gradient(135deg, #ffa502 0%, #ff8c00 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 40px;
+        font-weight: bold;
+        margin: 20px 0;
+        box-shadow: 0 10px 30px rgba(255,165,2,0.3);
     }
 
     .metric-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 25px;
-        border-radius: 15px;
-        border: 2px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
         color: white;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-    }
-
-    .form-container {
-        background: rgba(255,255,255,0.97);
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-        border-left: 6px solid #667eea;
-    }
-
-    .form-title {
-        font-size: 28px;
-        font-weight: 800;
-        color: #667eea;
-        margin-bottom: 20px;
-        letter-spacing: 1px;
-    }
-
-    .section-divider {
-        height: 3px;
-        background: linear-gradient(90deg, #667eea 0%, transparent 100%);
-        margin: 30px 0;
-        border-radius: 2px;
-    }
-
-    .decision-approved {
-        background: linear-gradient(135deg, #00d084 0%, #00c872 100%);
-        color: white;
-        padding: 40px;
-        border-radius: 20px;
         text-align: center;
-        font-size: 48px;
-        font-weight: 900;
-        box-shadow: 0 20px 50px rgba(0,208,132,0.4);
-        margin-bottom: 30px;
-        animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        letter-spacing: 2px;
+        box-shadow: 0 8px 20px rgba(102,126,234,0.2);
+        height: 100%;
     }
 
-    .decision-rejected {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
-        color: white;
-        padding: 40px;
-        border-radius: 20px;
-        text-align: center;
-        font-size: 48px;
-        font-weight: 900;
-        box-shadow: 0 20px 50px rgba(255,71,87,0.4);
-        margin-bottom: 30px;
-        animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        letter-spacing: 2px;
+    .metric-label {
+        font-size: 14px;
+        color: rgba(255,255,255,0.8);
+        margin-bottom: 10px;
     }
 
-    .decision-review {
-        background: linear-gradient(135deg, #ffa502 0%, #ff8c00 100%);
-        color: white;
-        padding: 40px;
-        border-radius: 20px;
-        text-align: center;
-        font-size: 48px;
-        font-weight: 900;
-        box-shadow: 0 20px 50px rgba(255,165,2,0.4);
-        margin-bottom: 30px;
-        animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        letter-spacing: 2px;
+    .metric-value {
+        font-size: 32px;
+        font-weight: bold;
+        color: #00f2fe;
     }
 
-    @keyframes popIn {
-        from {
-            opacity: 0;
-            transform: scale(0.8);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        color: white !important;
-        border: none !important;
-        padding: 18px 50px !important;
-        border-radius: 12px !important;
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        cursor: pointer !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 8px 20px rgba(102,126,234,0.4) !important;
-        width: 100% !important;
-        height: 60px !important;
-        letter-spacing: 1px !important;
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 12px 30px rgba(102,126,234,0.6) !important;
+    .explanation-box {
+        background: #f0f4ff;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+        margin: 20px 0;
+        color: #333;
     }
 
     .factor-box {
-        background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
-        padding: 18px;
-        border-radius: 12px;
-        margin-bottom: 15px;
-        border-left: 5px solid #667eea;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+        margin: 10px 0;
+        color: #333;
     }
 
+    /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 15px;
-        background: rgba(255,255,255,0.5);
+        gap: 0;
+        background: rgba(255,255,255,0.1);
         padding: 10px;
-        border-radius: 15px;
+        border-radius: 10px;
+        margin: 20px auto;
+        max-width: 1200px;
     }
 
     .stTabs [data-baseweb="tab"] {
-        padding: 12px 30px;
-        font-weight: 700;
+        padding: 12px 25px;
+        font-weight: 600;
+        color: white;
+        border-radius: 8px;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: rgba(102,126,234,0.8);
+    }
+
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
         border-radius: 10px;
-        font-size: 15px;
-        letter-spacing: 0.5px;
+        font-size: 16px;
+        font-weight: bold;
+        width: 100%;
+        height: 50px;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(102,126,234,0.4);
         transition: all 0.3s ease;
     }
 
-    .footer {
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102,126,234,0.6);
+    }
+
+    /* Analytics cards */
+    .analytics-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 25px;
+        border-radius: 12px;
+        color: white;
         text-align: center;
-        color: rgba(0,0,0,0.5);
-        padding: 30px;
+        box-shadow: 0 8px 20px rgba(102,126,234,0.2);
+    }
+
+    .analytics-label {
         font-size: 14px;
-        margin-top: 50px;
+        color: rgba(255,255,255,0.8);
+    }
+
+    .analytics-value {
+        font-size: 28px;
+        font-weight: bold;
+        color: #00f2fe;
+        margin-top: 10px;
+    }
+
+    /* Content container */
+    .content-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
     }
 </style>
 """
 
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# Header
-HTML_HEADER = """
-<div class="header-container">
+# Initialize session state
+if 'result' not in st.session_state:
+    st.session_state.result = None
+
+st.markdown("""
+<div class="header-section">
     <h1 class="header-title">🏦 AGENTIC AI LOAN APPROVAL</h1>
     <p class="header-subtitle">Multi-Agent Intelligent Evaluation with Claude Haiku 4.5</p>
 </div>
-"""
-st.markdown(HTML_HEADER, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# Navigation Tabs
-tab1, tab2, tab3, tab4 = st.tabs(["📝 Submit Application", "📊 View Results", "📈 Analytics", "📋 Audit Trail"])
+tab1, tab2, tab3, tab4 = st.tabs(["Submit Application", "View Results", "Analytics", "Audit Trail"])
 
-# TAB 1: Submit Application
 with tab1:
-    st.markdown('<div class="form-container">', unsafe_allow_html=True)
-    st.markdown('<h2 class="form-title">🎯 Loan Application Form</h2>', unsafe_allow_html=True)
-    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="form-section">
+    <h2 class="form-title">Loan Application Form</h2>
+    </div>
+    """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2, gap="large")
 
     with col1:
-        st.markdown("### 👤 Personal Information")
-        age = st.slider("🎂 Age", min_value=18, max_value=100, value=35, help="Applicant age (18-100 years)")
-        income = st.number_input("💰 Annual Income ($)", min_value=20000, value=100000, step=5000, help="Total annual household income")
-        employment = st.selectbox("💼 Employment Type", ["Salaried", "Self-Employed", "Contract"], help="Current employment status")
+        st.markdown("### Personal Information")
+        age = st.slider("Age", min_value=18, max_value=100, value=35, step=1)
+        income = st.number_input("Annual Income (USD)", min_value=20000, value=100000, step=5000)
+        employment = st.selectbox("Employment Type", ["Salaried", "Self-Employed", "Contract"])
 
     with col2:
-        st.markdown("### 📊 Financial Information")
-        credit_score = st.slider("📈 Credit Score", min_value=300, max_value=850, value=720, help="Your credit score (300-850)")
-        liabilities = st.number_input("💳 Existing Liabilities ($)", min_value=0, value=30000, step=5000, help="Total existing debt/loans")
-        location = st.selectbox("📍 Location", ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Miami", "Boston"], help="Application location")
+        st.markdown("### Financial Information")
+        credit_score = st.slider("Credit Score", min_value=300, max_value=850, value=720, step=10)
+        liabilities = st.number_input("Existing Liabilities (USD)", min_value=0, value=30000, step=5000)
+        location = st.selectbox("Location", ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Miami", "Boston"])
 
-    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    st.divider()
 
-    col3, col4 = st.columns(2)
+    col3, col4 = st.columns(2, gap="large")
 
     with col3:
-        loan_amount = st.number_input("🏦 Loan Amount ($)", min_value=5000, value=250000, step=10000, help="Requested loan amount")
+        loan_amount = st.number_input("Loan Amount (USD)", min_value=5000, value=250000, step=10000)
 
     with col4:
-        tenure = st.slider("⏱️ Loan Tenure (Months)", min_value=12, max_value=360, value=60, step=12, help="Repayment period in months")
+        tenure = st.slider("Loan Tenure (Months)", min_value=12, max_value=360, value=60, step=12)
 
-    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    st.divider()
 
-    # Real-time feedback
-    st.markdown("### 📊 Application Summary")
-    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+    # Calculate and display application summary
+    monthly_income = income / 12
+    total_debt = liabilities + loan_amount
+    dti = total_debt / income if income > 0 else 0
 
-    with col_f1:
-        dti = (liabilities + loan_amount) / income if income > 0 else 0
-        dti_status = "✅ Good" if dti < 0.43 else "⚠️ High" if dti < 0.50 else "❌ Very High"
-        st.metric("Debt-to-Income", f"{dti:.2f}", dti_status)
+    col_s1, col_s2, col_s3, col_s4 = st.columns(4, gap="small")
 
-    with col_f2:
-        credit_status = "✅ Excellent" if credit_score >= 750 else "✅ Good" if credit_score >= 700 else "⚠️ Fair" if credit_score >= 650 else "❌ Poor"
-        st.metric("Credit Rating", f"{credit_score}", credit_status)
+    with col_s1:
+        st.markdown(f"""
+        <div class="analytics-card">
+            <div class="analytics-label">DTI Ratio</div>
+            <div class="analytics-value">{dti:.2f}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with col_f3:
-        monthly_income = income / 12
-        st.metric("Monthly Income", f"${monthly_income:,.0f}", "Monthly")
+    with col_s2:
+        st.markdown(f"""
+        <div class="analytics-card">
+            <div class="analytics-label">Monthly Income</div>
+            <div class="analytics-value">${monthly_income:,.0f}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with col_f4:
-        total_debt = liabilities + loan_amount
-        st.metric("Total Obligation", f"${total_debt:,.0f}", "including new loan")
+    with col_s3:
+        st.markdown(f"""
+        <div class="analytics-card">
+            <div class="analytics-label">Total Debt</div>
+            <div class="analytics-value">${total_debt:,.0f}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    with col_s4:
+        st.markdown(f"""
+        <div class="analytics-card">
+            <div class="analytics-label">Credit Rating</div>
+            <div class="analytics-value">{credit_score}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Submit Button
-    col_button = st.columns([1, 2, 1])
+    st.divider()
 
-    with col_button[1]:
-        submit_button = st.button("🚀 SUBMIT APPLICATION", use_container_width=True)
+    col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+
+    with col_btn2:
+        submit_button = st.button("SUBMIT APPLICATION", use_container_width=True)
 
     if submit_button:
-        with st.spinner("⏳ Processing with Claude Haiku 4.5..."):
+        with st.spinner("Processing with Claude Haiku 4.5..."):
             progress_bar = st.progress(0)
 
             try:
@@ -310,9 +359,8 @@ with tab1:
                     "location": location
                 }
 
-                # Animated progress
                 for i in range(100):
-                    time.sleep(0.015)
+                    time.sleep(0.02)
                     progress_bar.progress(i + 1)
 
                 response = requests.post("http://127.0.0.1:8000/submit", json=payload, timeout=15)
@@ -321,23 +369,15 @@ with tab1:
                     result = response.json()
                     st.session_state.result = result['result']
                     st.session_state.app_id = result['application_id']
-                    st.session_state.form_submitted = True
-
-                    progress_bar.progress(100)
-                    time.sleep(0.5)
-
-                    st.success("✅ Application Processed Successfully!")
+                    st.success("Application Processed Successfully!")
                     st.balloons()
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error(f"❌ Error: {response.status_code}")
+                    st.error(f"Error: {response.status_code}")
             except Exception as e:
-                st.error(f"❌ Error: {str(e)}")
+                st.error(f"Error: {str(e)}")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# TAB 2: View Results
 with tab2:
     if st.session_state.result is not None:
         result = st.session_state.result
@@ -345,24 +385,20 @@ with tab2:
         risk_score = result.get('risk_score', 0)
         confidence = result.get('confidence', 0)
 
-        # Decision Display with Color Coding
         if decision == 'Approve':
-            st.markdown('<div class="decision-approved">✅ APPROVED</div>', unsafe_allow_html=True)
+            st.markdown('<div class="decision-banner-approved">✅ APPROVED</div>', unsafe_allow_html=True)
         elif decision == 'Reject':
-            st.markdown('<div class="decision-rejected">❌ REJECTED</div>', unsafe_allow_html=True)
+            st.markdown('<div class="decision-banner-rejected">❌ REJECTED</div>', unsafe_allow_html=True)
         else:
-            st.markdown('<div class="decision-review">⚠️ REQUIRES REVIEW</div>', unsafe_allow_html=True)
+            st.markdown('<div class="decision-banner-review">⚠️ REQUIRES REVIEW</div>', unsafe_allow_html=True)
 
-        st.markdown("---")
-
-        # Key Metrics
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4 = st.columns(4, gap="small")
 
         with col1:
             st.markdown(f"""
             <div class="metric-card">
-                <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">DECISION</h3>
-                <h2 style="margin: 10px 0 0 0; font-size: 36px; color: #00f2fe;">{decision}</h2>
+                <div class="metric-label">DECISION</div>
+                <div class="metric-value">{decision}</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -370,39 +406,42 @@ with tab2:
             risk_color = "#00d084" if risk_score < 30 else "#ffa502" if risk_score < 70 else "#ff4757"
             st.markdown(f"""
             <div class="metric-card">
-                <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">RISK SCORE</h3>
-                <h2 style="margin: 10px 0 0 0; font-size: 36px; color: {risk_color};">{risk_score}/100</h2>
+                <div class="metric-label">RISK SCORE</div>
+                <div class="metric-value" style="color: {risk_color};">{risk_score}/100</div>
             </div>
             """, unsafe_allow_html=True)
 
         with col3:
             st.markdown(f"""
             <div class="metric-card">
-                <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">CONFIDENCE</h3>
-                <h2 style="margin: 10px 0 0 0; font-size: 36px; color: #00f2fe;">{confidence}%</h2>
+                <div class="metric-label">CONFIDENCE</div>
+                <div class="metric-value">{confidence}%</div>
             </div>
             """, unsafe_allow_html=True)
 
         with col4:
-            case_id_short = result.get('case_id', 'N/A')[:12]
+            case_id = result.get('case_id', 'N/A')[:12]
             st.markdown(f"""
             <div class="metric-card">
-                <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">CASE ID</h3>
-                <p style="margin: 10px 0 0 0; font-size: 14px; color: #00f2fe; word-break: break-all;">{case_id_short}...</p>
+                <div class="metric-label">CASE ID</div>
+                <div class="metric-value" style="font-size: 18px;">{case_id}...</div>
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("---")
+        st.divider()
 
-        # Explanation and Factors
-        col_exp1, col_exp2 = st.columns([1, 1])
+        col_exp1, col_exp2 = st.columns(2, gap="large")
 
         with col_exp1:
-            st.markdown("### 💡 Decision Explanation")
-            st.info(result.get("explanation", "No explanation available"))
+            st.markdown("### Decision Explanation")
+            st.markdown(f"""
+            <div class="explanation-box">
+                {result.get('explanation', 'No explanation available')}
+            </div>
+            """, unsafe_allow_html=True)
 
         with col_exp2:
-            st.markdown("### 🎯 Key Decision Factors")
+            st.markdown("### Key Decision Factors")
             factors = result.get('key_factors', [])
             if factors:
                 for idx, factor in enumerate(factors, 1):
@@ -412,40 +451,29 @@ with tab2:
                     </div>
                     """, unsafe_allow_html=True)
 
-        st.markdown("---")
+        st.divider()
 
-        # Risk Assessment Gauge
-        st.markdown("### 📊 Risk Assessment Gauge")
-
+        st.markdown("### Risk Assessment Gauge")
         fig = go.Figure(go.Indicator(
             mode="gauge+number",
             value=risk_score,
             domain={'x': [0, 1], 'y': [0, 1]},
-            title={'text': "Risk Score (0-100)"},
             gauge={
-                'axis': {'range': [None, 100], 'tickfont': {'size': 12}},
-                'bar': {'color': "#667eea", 'thickness': 0.8},
+                'axis': {'range': [None, 100]},
+                'bar': {'color': "#667eea"},
                 'steps': [
                     {'range': [0, 30], 'color': "#00d084"},
                     {'range': [30, 70], 'color': "#ffa502"},
                     {'range': [70, 100], 'color': "#ff4757"}
-                ],
-                'threshold': {
-                    'line': {'color': "red", 'width': 4},
-                    'thickness': 0.75,
-                    'value': 90
-                }
+                ]
             }
         ))
-
-        fig.update_layout(height=400, margin=dict(l=10, r=10, t=50, b=10), paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#667eea'))
+        fig.update_layout(height=400, margin=dict(l=10, r=10, t=50, b=10))
         st.plotly_chart(fig, use_container_width=True)
 
-        st.markdown("---")
+        st.divider()
 
-        # Confidence Distribution
-        st.markdown("### 📈 Confidence Level Distribution")
-
+        st.markdown("### Confidence Distribution")
         fig2 = go.Figure(data=[
             go.Bar(
                 x=['Confidence Level'],
@@ -453,153 +481,117 @@ with tab2:
                 marker=dict(
                     color=confidence,
                     colorscale='Viridis',
-                    showscale=True,
-                    colorbar=dict(title="Confidence %", thickness=15, len=0.7)
+                    showscale=True
                 ),
                 text=[f'{confidence}%'],
-                textposition='outside',
-                hovertemplate='<b>Confidence:</b> %{y}%<extra></extra>'
+                textposition='auto'
             )
         ])
-
-        fig2.update_layout(
-            height=350,
-            yaxis=dict(range=[0, 100], title="Confidence %"),
-            xaxis=dict(title=""),
-            margin=dict(l=10, r=10, t=10, b=10),
-            showlegend=False,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#667eea')
-        )
-
+        fig2.update_layout(height=300, yaxis=dict(range=[0, 100]), margin=dict(l=10, r=10, t=10, b=10))
         st.plotly_chart(fig2, use_container_width=True)
 
     else:
-        st.warning("⚠️ No Results Yet - Please submit an application first to view results!")
+        st.warning("No application results yet. Please submit an application first!")
 
-# TAB 3: Analytics Dashboard
 with tab3:
-    st.markdown("### 📊 Loan Approval Analytics Dashboard")
+    st.markdown("### Loan Approval Analytics Dashboard")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
-        st.markdown("""
-        <div class="metric-card">
-            <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Total Applications</h3>
-            <h2 style="margin: 10px 0 0 0; color: #00f2fe; font-size: 32px;">1</h2>
+        st.markdown(f"""
+        <div class="analytics-card">
+            <div class="analytics-label">Total Applications</div>
+            <div class="analytics-value">1</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("""
-        <div class="metric-card">
-            <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Approval Rate</h3>
-            <h2 style="margin: 10px 0 0 0; color: #00d084; font-size: 32px;">100%</h2>
+        st.markdown(f"""
+        <div class="analytics-card">
+            <div class="analytics-label">Approval Rate</div>
+            <div class="analytics-value">100%</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
-        st.markdown("""
-        <div class="metric-card">
-            <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Avg Processing Time</h3>
-            <h2 style="margin: 10px 0 0 0; color: #00f2fe; font-size: 32px;">2.5s</h2>
+        st.markdown(f"""
+        <div class="analytics-card">
+            <div class="analytics-label">Avg Processing Time</div>
+            <div class="analytics-value">2.5s</div>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    st.markdown("### 🎯 Decision Distribution")
+    st.divider()
 
     if st.session_state.result is not None:
+        st.markdown("### Decision Distribution")
         decision_data = {
             'Decision': ['Approved', 'Rejected', 'Under Review'],
             'Count': [1, 0, 0]
         }
         df = pd.DataFrame(decision_data)
-
         fig = px.pie(df, values='Count', names='Decision',
                     color_discrete_sequence=['#00d084', '#ff4757', '#ffa502'],
-                    height=450,
-                    hole=0.3)
-
-        fig.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#667eea', size=12),
-            showlegend=True
-        )
-
+                    height=400)
         st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("---")
+        st.divider()
 
-    st.markdown("### 📈 Risk Score Trends")
-
-    if st.session_state.result is not None:
+        st.markdown("### Risk Score Trends")
         risk_data = {
             'Application': ['Current'],
             'Risk Score': [st.session_state.result.get('risk_score', 0)]
         }
         df = pd.DataFrame(risk_data)
-
         fig = px.bar(df, x='Application', y='Risk Score',
                     color='Risk Score',
                     color_continuous_scale='RdYlGn_r',
-                    height=400,
-                    labels={'Risk Score': 'Risk Score (0-100)'})
-
-        fig.update_layout(
-            yaxis=dict(range=[0, 100]),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#667eea'),
-            showlegend=False
-        )
-
+                    height=400)
         st.plotly_chart(fig, use_container_width=True)
 
-# TAB 4: Audit Trail
 with tab4:
-    st.markdown("### 📋 Complete Audit Trail")
+    st.markdown("### Complete Audit Trail")
 
     if st.session_state.result is not None:
         result = st.session_state.result
 
-        col1, col2 = st.columns([1, 1])
+        col1, col2 = st.columns(2, gap="large")
 
         with col1:
-            st.markdown("#### 📄 Application Details")
-            st.json({
+            st.markdown("#### Application Details")
+            app_details = {
                 "Application ID": result.get('application_id', 'N/A'),
                 "Case ID": result.get('case_id', 'N/A'),
                 "Decision": result.get('decision', 'N/A'),
                 "Risk Score": result.get('risk_score', 'N/A'),
                 "Confidence": result.get('confidence', 'N/A'),
                 "Timestamp": result.get('timestamp', 'N/A')
-            })
+            }
+            st.json(app_details)
 
         with col2:
-            st.markdown("#### 🤖 Agent Analysis")
-            st.json({
+            st.markdown("#### Agent Analysis")
+            agent_analysis = {
                 "Explanation": result.get('explanation', 'N/A'),
                 "Key Factors": result.get('key_factors', []),
                 "Notification": result.get('notification', 'N/A')
-            })
+            }
+            st.json(agent_analysis)
 
-        st.markdown("---")
+        st.divider()
 
-        st.markdown("#### 📊 Full Audit Log (JSON)")
+        st.markdown("#### Full Audit Log (JSON)")
         st.code(json.dumps(result, indent=2), language='json')
 
     else:
-        st.warning("⚠️ No Audit Trail Available - Please submit an application first!")
+        st.warning("No audit trail available. Please submit an application first!")
 
-# Footer
+st.divider()
+
 st.markdown("""
-<div class="footer">
-    <p>🏦 Agentic AI Loan Approval System using Claude Haiku 4.5</p>
-    <p>Advanced Multi-Agent Architecture for Intelligent Decision Making</p>
-    <p style="font-size: 12px; opacity: 0.6;">© 2026 Loan Approval System - All Rights Reserved</p>
+<div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.7); margin-top: 40px;">
+    <p style="margin: 0; font-size: 14px;">🏦 Agentic AI Loan Approval System using Claude Haiku 4.5</p>
+    <p style="margin: 10px 0 0 0; font-size: 12px;">Advanced Multi-Agent Architecture for Intelligent Decision Making</p>
 </div>
 """, unsafe_allow_html=True)
