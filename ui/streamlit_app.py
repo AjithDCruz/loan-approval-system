@@ -866,6 +866,7 @@ with tab1:
     with col1:
         st.markdown('<div class="section-header-premium">Personal Profile</div>', unsafe_allow_html=True)
         st.write("")
+        name = st.text_input("Applicant Name", value="", placeholder="Enter full name")
         age = st.slider("Age", min_value=18, max_value=100, value=35, step=1)
         income = st.number_input("Annual Income (USD)", min_value=20000, value=100000, step=5000)
 
@@ -961,50 +962,107 @@ with tab1:
             time.sleep(0.3)
 
         try:
-            payload = {
-                "age": int(age),
-                "income": int(income),
-                "employment": employment,
-                "credit_score": int(credit_score),
-                "loan_amount": int(loan_amount),
-                "tenure_months": int(tenure),
-                "liabilities": int(liabilities),
-                "location": location
-            }
-
-            response = requests.post("http://127.0.0.1:8000/submit", json=payload, timeout=15)
-
-            if response.status_code == 200:
-                result = response.json()
-                st.session_state.result = result['result']
-                st.session_state.app_id = result['application_id']
-
-                app_id = result['application_id']
-                st.session_state.application_history[app_id] = {
-                    "result": result['result'],
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "decision": result['result'].get('decision', 'Unknown'),
-                    "risk_score": result['result'].get('risk_score', 0),
-                    "confidence": result['result'].get('confidence', 0),
+            if not name or name.strip() == "":
+                st.error("❌ Please enter applicant name")
+            else:
+                payload = {
+                    "name": name,
                     "age": int(age),
                     "income": int(income),
+                    "employment": employment,
                     "credit_score": int(credit_score),
                     "loan_amount": int(loan_amount),
-                    "liabilities": int(liabilities)
+                    "tenure_months": int(tenure),
+                    "liabilities": int(liabilities),
+                    "location": location
                 }
 
-                progress_placeholder.empty()
-                status_placeholder.empty()
-                st.success(f"✅ Application {app_id[:12]} processed successfully!")
-                st.balloons()
-                time.sleep(1)
-                st.rerun()
-            else:
-                st.error(f"Error: {response.status_code}")
+                response = requests.post("http://127.0.0.1:8000/submit", json=payload, timeout=15)
+
+                if response.status_code == 200:
+                    result = response.json()
+                    st.session_state.result = result['result']
+                    st.session_state.app_id = result['application_id']
+
+                    app_id = result['application_id']
+                    st.session_state.application_history[app_id] = {
+                        "result": result['result'],
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "decision": result['result'].get('decision', 'Unknown'),
+                        "risk_score": result['result'].get('risk_score', 0),
+                        "confidence": result['result'].get('confidence', 0),
+                        "applicant_name": name,
+                        "age": int(age),
+                        "income": int(income),
+                        "credit_score": int(credit_score),
+                        "loan_amount": int(loan_amount),
+                        "liabilities": int(liabilities)
+                    }
+
+                    progress_placeholder.empty()
+                    status_placeholder.empty()
+                    st.success(f"✅ Application {app_id[:12]} for {name} processed successfully!")
+                    st.balloons()
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error(f"Error: {response.status_code}")
         except Exception as e:
             st.error(f"Error: {str(e)}")
 
 with tab2:
+    st.markdown('<div class="form-title-premium">Decision Results & Application Lookup</div>', unsafe_allow_html=True)
+
+    search_col1, search_col2 = st.columns([2, 1])
+
+    with search_col1:
+        search_name = st.text_input("🔍 Search Application by Applicant Name", value="", placeholder="Enter applicant name to find previous applications")
+
+    with search_col2:
+        search_btn = st.button("Search", use_container_width=True)
+
+    if search_btn and search_name:
+        try:
+            search_response = requests.get(f"http://127.0.0.1:8000/apps/search/{search_name}")
+            if search_response.status_code == 200:
+                search_results = search_response.json()
+                if search_results['results_count'] > 0:
+                    st.success(f"✅ Found {search_results['results_count']} application(s) for '{search_name}'")
+                    for idx, app in enumerate(search_results['applications'], 1):
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            st.markdown(f"""
+                            <div class="metric-card-premium">
+                                <div class="metric-label-premium">App #{idx}</div>
+                                <div class="metric-value-premium">{app.get('application_id', 'N/A')[:8]}...</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col_b:
+                            decision = app.get('decision', 'Unknown')
+                            st.markdown(f"""
+                            <div class="metric-card-premium">
+                                <div class="metric-label-premium">Decision</div>
+                                <div class="metric-value-premium">{decision}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col_c:
+                            st.markdown(f"""
+                            <div class="metric-card-premium">
+                                <div class="metric-label-premium">Risk Score</div>
+                                <div class="metric-value-premium">{app.get('risk_score', 'N/A')}/100</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                        st.write("")
+                        st.caption(f"📅 {app.get('timestamp', 'N/A')} | 📊 Confidence: {app.get('confidence', 'N/A')}%")
+                        st.write("")
+                else:
+                    st.warning(f"⚠️ No applications found for '{search_name}'. Try a different spelling or partial name.")
+        except Exception as e:
+            st.error(f"❌ Search error: {str(e)}")
+
+    st.divider()
+
     if st.session_state.result is not None:
         result = st.session_state.result
         decision = result.get('decision', 'UNKNOWN')

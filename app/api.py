@@ -9,6 +9,7 @@ engine = LoanOrchestrationEngine()
 apps_db = {}
 
 class LoanApplication(BaseModel):
+    name: str
     age: int
     income: float
     employment: str
@@ -22,9 +23,25 @@ class LoanApplication(BaseModel):
 async def submit(app_data: LoanApplication):
     app_id = str(uuid.uuid4())
     data = {**app_data.dict(), "application_id": app_id}
-    result = engine.process(data)
-    apps_db[app_id] = result
-    return {"application_id": app_id, "status": "processed", "result": result}
+    try:
+        result = engine.process(data)
+        # Add applicant name to result for searchability
+        result["applicant_name"] = app_data.name
+        apps_db[app_id] = result
+        return {"application_id": app_id, "status": "processed", "result": result}
+    except Exception as e:
+        return {
+            "application_id": app_id,
+            "status": "error",
+            "error": str(e),
+            "result": {
+                "decision": "Review",
+                "risk_score": 50,
+                "confidence": 50,
+                "explanation": "System processing error - manual review required",
+                "applicant_name": app_data.name
+            }
+        }
 
 @app.get("/app/{app_id}")
 async def get_application(app_id: str):
@@ -33,6 +50,32 @@ async def get_application(app_id: str):
 @app.get("/apps")
 async def list_applications():
     return list(apps_db.values())
+
+
+@app.get("/apps/search/{applicant_name}")
+async def search_applications_by_name(applicant_name: str):
+    """Search applications by applicant name"""
+    results = []
+    for app_id, app_data in apps_db.items():
+        # Search in applicant_name field
+        stored_name = app_data.get("applicant_name", "")
+        if applicant_name.lower() in stored_name.lower():
+            results.append({
+                "application_id": app_id,
+                "applicant_name": stored_name,
+                "decision": app_data.get("decision", "Unknown"),
+                "risk_score": app_data.get("risk_score", 0),
+                "confidence": app_data.get("confidence", 0),
+                "explanation": app_data.get("explanation", ""),
+                "timestamp": app_data.get("timestamp", ""),
+                "full_result": app_data
+            })
+
+    return {
+        "search_term": applicant_name,
+        "results_count": len(results),
+        "applications": results
+    }
 
 
 # Manual Review Endpoints

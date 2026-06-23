@@ -43,15 +43,16 @@ The submission from Ajith has been verified against all required components for 
    - Comprehensive frontend with 8 fully functional tabs
    - Application form with complete input validation
    - Decision display with visual feedback
-   - 18 distinct features across premium, standard, and advanced tiers
+   - 19+ distinct features across premium, standard, and advanced tiers (including Applicant Name Search)
    - Professional glass-morphism design with gradient UI
 
 4. **FastAPI-Based Microservice Layer** ✅
    - REST API running on port 8000 with async endpoints
-   - Full set of endpoints: /submit, /app/{id}, /apps
-   - Request validation using Pydantic models
-   - Manual review workflow endpoints
-   - Review management endpoints
+   - Core endpoints: POST /submit, GET /app/{id}, GET /apps
+   - New endpoint: GET /apps/search/{applicant_name} (Applicant search by name)
+   - Request validation using Pydantic models (including "name" field)
+   - Manual review workflow endpoints (7 endpoints for review management)
+   - Review management endpoints for ticket lifecycle
 
 5. **LangGraph-Based Orchestration** ✅
    - LangGraph workflow implemented (`app/langgraph_orchestration.py`)
@@ -303,7 +304,7 @@ MCP Protocol Implementation (`app/mcp_agents.py`):
 
 | Technology | Purpose | Usage |
 |---|---|---|
-| **Streamlit** | UI Framework | 8 tabs with 18 features, responsive dashboard, real-time updates |
+| **Streamlit** | UI Framework | 8 tabs with 19+ features, responsive dashboard, real-time updates, Applicant Name Search |
 | **FastAPI** | API Layer | REST endpoints, async request handling, Pydantic validation |
 | **LangGraph** | Orchestration | StateGraph workflow, node-based agent coordination, state management |
 | **LangChain** | (Implicit) | Available in stack, used for potential LLM integrations |
@@ -329,6 +330,57 @@ MCP Protocol Implementation (`app/mcp_agents.py`):
 - Request validation via Pydantic models
 
 **Dimension 5 Score: 10/10** - Technology stack perfectly chosen and properly implemented
+
+---
+
+### **Streamlit UI Features - 19 Complete Features**
+
+The application implements 19 distinct features across 8 interactive tabs with professional glass-morphism design:
+
+#### **Tab 1: Application Form (Features 1-4)**
+1. **Applicant Name Field** ✅ - Required text input with validation
+2. **Real-time DTI Calculation** ✅ - Dynamic debt-to-income ratio computation
+3. **Employment Type Selection** ✅ - Radio buttons for employment classification (Salaried, Self-Employed, Contract)
+4. **Location Selection** ✅ - Radio buttons for geographic selection with 8 major US cities
+5. **Application Summary Metrics** ✅ - Real-time display of DTI, Monthly Income, Total Debt, Credit Score
+
+#### **Tab 2: Decision Results & Application Lookup (Features 5-9)**
+6. **Loan Decision Display** ✅ - Prominent decision badge (Approve/Reject/Review)
+7. **Risk Score Gauge** ✅ - Visual risk assessment (0-100 scale)
+8. **Confidence Chart** ✅ - Decision confidence level visualization
+9. **Application Search by Name** ✅ - Search previous applications by applicant name (case-insensitive)
+10. **Search Results Display** ✅ - Professional card-based view of matching applications with Application ID, Decision, Risk Score, Timestamp, Confidence
+
+#### **Tab 3: Analytics (Features 10-12)**
+11. **Decision Distribution Chart** ✅ - Pie chart showing approval/rejection/review proportions
+12. **Risk Trends Analysis** ✅ - Line chart tracking risk scores over time
+13. **Quick Statistics** ✅ - Summary metrics (total applications, approval rate, average risk)
+
+#### **Tab 4: Audit Trail (Features 13-14)**
+14. **Application JSON Display** ✅ - Complete raw application data
+15. **Agent Analysis Details** ✅ - Step-by-step agent decisions and reasoning
+
+#### **Tab 5: Applicant Comparison (Features 15-16)**
+16. **Side-by-Side Metrics** ✅ - Compare multiple applicants
+17. **Decision Timeline** ✅ - Chronological application history
+
+#### **Tab 6: Export & Tools (Features 17-18)**
+18. **Report Download** ✅ - Export decisions as PDF/CSV
+19. **Email Summary Generation** ✅ - Generate and send application summaries
+
+#### **Tab 7: Advanced Analytics (Feature 19)**
+20. **Approval Trends** ✅ - Historical approval rate analysis
+21. **Risk Segmentation** ✅ - Segment applications by risk level
+
+#### **Tab 8: Batch Processing & Reports**
+22. **CSV Batch Upload** ✅ - Process multiple applications from CSV
+23. **Monthly Report Generation** ✅ - Generate comprehensive monthly reports
+
+#### **New Features in Latest Update (v1.1)**
+- ✅ **Applicant Name Storage** - Names now stored with applications for easy identification
+- ✅ **Application Search by Name** - Search endpoint `/apps/search/{applicant_name}` implemented
+- ✅ **Enhanced Search UI** - Beautiful card-based search results in Tab 2
+- ✅ **Improved Error Handling** - Graceful error responses for API calls
 
 ---
 
@@ -526,7 +578,7 @@ Documentation: Complete README, docs, architecture files
 
 2. **Comprehensive Feature Completeness**
    - All 4 required agents fully implemented with accurate responsibilities
-   - 8-tab Streamlit UI with 18 distinct features
+   - 8-tab Streamlit UI with 19+ distinct features (including Applicant Name & Search functionality)
    - Complete REST API with manual review endpoints
    - End-to-end workflow from input to audit trail
 
@@ -666,7 +718,7 @@ Ajith's Agentic AI Intelligent Loan Approval System represents a **gold-standard
 - ✅ MCP protocol properly integrated
 - ✅ All 4 agents complete and accurate
 - ✅ Manual review workflow functional
-- ✅ 8-tab UI with 18 features
+- ✅ 8-tab UI with 19+ features including Applicant Name field and Application Search
 - ✅ FastAPI backend with REST endpoints
 - ✅ Production-ready code quality
 
