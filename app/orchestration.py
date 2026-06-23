@@ -5,6 +5,7 @@ from app.agents import (
     LoanDecisionAgent,
     ComplianceOrchestratorAgent
 )
+from app.manual_review import review_manager
 
 class LoanOrchestrationEngine:
     def __init__(self):
@@ -25,6 +26,20 @@ class LoanOrchestrationEngine:
             decision = self.agent3.decide(profile, financial, app_data)
             self.log.append({"step": "loan_decision", "data": decision, "time": datetime.now().isoformat()})
 
+            # Check if manual review is needed
+            review_ticket = None
+            if decision.get('classification') == 'Review' or decision.get('confidence', 0) < 70:
+                review_ticket = review_manager.create_review_ticket(
+                    app_data['application_id'],
+                    decision
+                )
+                self.log.append({
+                    "step": "manual_review_created",
+                    "ticket_id": review_ticket.ticket_id,
+                    "reason": review_ticket.reason_for_review,
+                    "time": datetime.now().isoformat()
+                })
+
             compliance = self.agent4.orchestrate(decision, app_data, app_data['application_id'])
             self.log.append({"step": "compliance", "data": compliance, "time": datetime.now().isoformat()})
 
@@ -37,7 +52,8 @@ class LoanOrchestrationEngine:
                 "key_factors": decision.get('key_factors', []),
                 "case_id": compliance.get('case_id', ''),
                 "notification": compliance.get('notification_message', ''),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
+                "review_ticket_id": review_ticket.ticket_id if review_ticket else None
             }
             return result
         except Exception as e:

@@ -8,3 +8,5 @@ python-dotenv==1.0.0
 plotly==5.17.0
 pandas==2.0.3
 streamlit-option-menu==0.3.6
+langgraph>=0.0.50
+mcp>=0.1.0
